@@ -11,14 +11,23 @@ Usage: in Papyrus, use 'RegisterForExternalEvent'
 in C++, call 'SendPapyrusExternalEvent'
 */
 
-template <class F>
-using BSTThreadScrapFunction = std::function<F>;        // Used by NG for DispatchMethod calls
-
-template <class F>
-using BSTThreadScrapFunctionOG = RE::msvc::function<F>; // Used by OG for same
 
 namespace Papyrus {
 namespace detail {
+
+template <class F>
+using BSTThreadScrapFunction = std::function<F>;  // Used by NG for DispatchMethod calls
+
+template <class F>
+using BSTThreadScrapFunctionOG = RE::msvc::function<F>;  // Used by OG for same
+
+size_t GetVtableFunctionAddr(int entry) {
+	auto    VMvtbl = RE::BSScript::Internal::VirtualMachine::VTABLE;
+	REL::ID VMvtblID = VMvtbl[0];
+
+	void** pt = (void**)VMvtblID.address();
+	return (size_t)pt[entry];
+	}
 
 // NG can use the current IVirtualMachine::DispatchMethodCall as is.
 // OG/VR, we need to call the function with different args.
@@ -32,15 +41,8 @@ bool DispatchMethodCallOG(
 	const RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor>& a_callback) {
 
 	// Get function address out of the Vtable
-	auto VMvtbl = RE::BSScript::Internal::VirtualMachine::VTABLE;
-	REL::ID VMvtblID = VMvtbl[0];
-	UINT64 DispatchMethodptr;
-
-	void** pt = (void**)VMvtblID.address();
-	DispatchMethodptr = (size_t)pt[46];
-
 	using func_t = decltype(&DispatchMethodCallOG);
-	REL::Relocation<func_t> func{ DispatchMethodptr };
+	REL::Relocation<func_t> func{ GetVtableFunctionAddr(46) };
 
 	return func(vm, a_objHandle, a_objName, a_funcName, a_arguments, a_callback);
 	}
@@ -53,15 +55,8 @@ bool DispatchStaticCallOG(
 	const RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor>& a_callback) {
 
 	// Get function address out of the Vtable
-	auto VMvtbl = RE::BSScript::Internal::VirtualMachine::VTABLE;
-	REL::ID VMvtblID = VMvtbl[0];
-	UINT64 DispatchMethodptr;
-
-	void** pt = (void**)VMvtblID.address();
-	DispatchMethodptr = (size_t)pt[44];
-
 	using func_t = decltype(&DispatchStaticCallOG);
-	REL::Relocation<func_t> func{ DispatchMethodptr };
+	REL::Relocation<func_t> func{ GetVtableFunctionAddr(44) };
 
 	return func(vm, a_objName, a_funcName, a_arguments, a_callback);
 	}
@@ -115,7 +110,7 @@ bool DispatchMethodCall(
 			a_callback);
 		}
 	else {
-		return DispatchMethodCallOG(vm, a_objHandle, a_objName, a_funcName, (FunctionArgs{ vm, a_args... }).get(), nullptr);
+		return DispatchMethodCallOG(vm, a_objHandle, a_objName, a_funcName, (FunctionArgs{ vm, a_args... }).get(), a_callback);
 		}
 	}
 
@@ -141,7 +136,7 @@ static void SendPapyrusExternalEvent(std::string a_eventName, Args... _args) {
 		papyrus->GetExternalEventRegistrations(
 			a_eventName, &evntData,
 			[](uint64_t handle, const char* scriptName, const char* callbackName, void* dataPtr) {
-			PapyrusEventData* d = (PapyrusEventData*)dataPtr;
+			PapyrusEventData* d = static_cast<PapyrusEventData*>(dataPtr);
 			d->vm->DispatchMethodCall(handle, scriptName, callbackName,
 				[&](RE::BSScrapArray<RE::BSScript::Variable>& a_out) {
 				a_out = d->argsPacked;
