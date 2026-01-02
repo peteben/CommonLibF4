@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #pragma once
-<<<<<<< HEAD
 
 namespace Papyrus {
 	template <class F>
@@ -40,38 +39,13 @@ namespace Papyrus {
             }(std::make_index_sequence<size>{});
             return result;
 			}
-=======
-template <class F>
-using BSTThreadScrapFunctionOG = RE::msvc::function<F>;  // Used by OG for same
-
-namespace Papyrus
-{
-	namespace detail
-	{
-		template <class... Args>
-		RE::BSScrapArray<RE::BSScript::Variable> PackVariables(Args&&... a_args)
-		{
-			constexpr auto                           size = sizeof...(a_args);
-			auto                                     args = std::make_tuple(std::forward<Args>(a_args)...);
-			RE::BSScrapArray<RE::BSScript::Variable> result{ size };
-			[&]<std::size_t... p>(std::index_sequence<p...>) {
-				((RE::BSScript::PackVariable(result.at(p), std::get<p>(args))), ...);
-			}(std::make_index_sequence<size>{});
-			return result;
-		}
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1
 
 		class FunctionArgsBase
 		{
 		public:
 			FunctionArgsBase() = delete;
 
-<<<<<<< HEAD
             FunctionArgsBase(RE::BSScript::IVirtualMachine* a_vm) : args(nullptr),vm(a_vm) {}
-=======
-			FunctionArgsBase(RE::BSScript::IVirtualMachine* a_vm) :
-				vm(a_vm) {}
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1
 
 			/*
             bool operator()(RE::BSScrapArray<RE::BSScript::Variable>& a_args)
@@ -117,10 +91,5 @@ namespace Papyrus
 		}
 	};
 
-<<<<<<< HEAD
     static_assert(sizeof(FunctionArgs<std::monostate>) == 0x10);
 }
-=======
-	static_assert(sizeof(FunctionArgs<std::monostate>) == 0x10);
-}
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1

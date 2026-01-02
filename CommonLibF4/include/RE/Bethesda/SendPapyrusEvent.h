@@ -11,21 +11,12 @@ Usage: in Papyrus, use 'RegisterForExternalEvent'
 in C++, call 'SendPapyrusExternalEvent'
 */
 
-<<<<<<< HEAD
-=======
-template <class F>
-using BSTThreadScrapFunction = std::function<F>;  // Used by NG for DispatchMethod calls
-
-template <class F>
-using BSTThreadScrapFunctionOG = RE::msvc::function<F>;  // Used by OG for same
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1
 
 namespace Papyrus
 {
 	namespace detail
 	{
 
-<<<<<<< HEAD
 template <class F>
 using BSTThreadScrapFunction = std::function<F>;  // Used by NG for DispatchMethod calls
 
@@ -42,10 +33,6 @@ size_t GetVtableFunctionAddr(int entry) {
 
 // NG can use the current IVirtualMachine::DispatchMethodCall as is.
 // OG/VR, we need to call the function with different args.
-=======
-		// NG can use the current IVirtualMachine::DispatchMethodCall as is.
-		// OG/VR, we need to call the function with different args.
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1
 
 		bool DispatchMethodCallOG(
 			RE::BSScript::IVirtualMachine*                                                   vm,
@@ -60,7 +47,6 @@ size_t GetVtableFunctionAddr(int entry) {
 			REL::ID VMvtblID = VMvtbl[0];
 			UINT64  DispatchMethodptr;
 
-<<<<<<< HEAD
 	// Get function address out of the Vtable
 	using func_t = decltype(&DispatchMethodCallOG);
 	REL::Relocation<func_t> func{ GetVtableFunctionAddr(46) };
@@ -102,15 +88,6 @@ bool DispatchStaticCall(
 			return true;
 			},
 			a_callback);
-=======
-			void** pt = (void**)VMvtblID.address();
-			DispatchMethodptr = (size_t)pt[46];
-
-			using func_t = decltype(&DispatchMethodCallOG);
-			REL::Relocation<func_t> func{ DispatchMethodptr };
-
-			return func(vm, a_objHandle, a_objName, a_funcName, a_arguments, a_callback);
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1
 		}
 
 		bool DispatchStaticCallOG(
@@ -136,7 +113,6 @@ bool DispatchStaticCall(
 
 		// Generic DispatchStaticCall
 
-<<<<<<< HEAD
 template <class... Args>
 bool DispatchMethodCall(
 	RE::BSScript::IVirtualMachine* vm,
@@ -191,27 +167,6 @@ static void SendPapyrusExternalEvent(std::string a_eventName, Args... _args) {
 				return true;
 				},
 				nullptr);
-=======
-		template <class... Args>
-		bool DispatchStaticCall(
-			RE::BSScript::IVirtualMachine*                                  vm,
-			const RE::BSFixedString&                                        a_objName,
-			const RE::BSFixedString&                                        a_funcName,
-			const RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor>& a_callback,
-			Args... a_args)
-		{
-			if (REL::Module::IsNG()) {
-				return vm->DispatchStaticCall(
-					a_objName,
-					a_funcName,
-					[&](RE::BSScrapArray<RE::BSScript::Variable>& a_out) {
-						a_out = detail::PackVariables(a_args...);
-						return true;
-					},
-					a_callback);
-			} else {
-				return DispatchStaticCallOG(vm, a_objName, a_funcName, (FunctionArgs{ vm, a_args... }).get(), a_callback);
->>>>>>> 598175ae48718205eed6d01aa43919c25a5c8cc1
 			}
 		}
 
