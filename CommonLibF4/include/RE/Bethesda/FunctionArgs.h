@@ -29,17 +29,6 @@ namespace Papyrus {
 	using BSTThreadScrapFunctionOG = RE::msvc::function<F>;  // Used by OG/VR for DispatchMethod calls
 
 	namespace detail {
-        template <class... Args>
-        RE::BSScrapArray<RE::BSScript::Variable> PackVariables(Args&&... a_args) {
-            constexpr auto size = sizeof...(a_args);
-            auto args = std::make_tuple(std::forward<Args>(a_args)...);
-            RE::BSScrapArray<RE::BSScript::Variable> result{size};
-            [&]<std::size_t... p>(std::index_sequence<p...>) {
-                ((RE::BSScript::PackVariable(result.at(p), std::get<p>(args))), ...);
-            }(std::make_index_sequence<size>{});
-            return result;
-			}
-
         class FunctionArgsBase {
         public:
             FunctionArgsBase() = delete;
@@ -76,13 +65,18 @@ namespace Papyrus {
         FunctionArgs() = delete;
 
         FunctionArgs(RE::BSScript::IVirtualMachine* a_vm, Args... a_args) : FunctionArgsBase(a_vm) {
-            auto scrap = detail::PackVariables(a_args...);
+			auto scrap = RE::BSScript::detail::PackVariables(a_args...);
             args = new RE::BSScript::ArrayWrapper<RE::BSScript::Variable>(scrap, *vm);
         }
 
         BSTThreadScrapFunctionOG<bool(RE::BSScrapArray<RE::BSScript::Variable>&)> get() {
             return detail::CreateThreadScrapFunction(*this);
         }
+
+		~FunctionArgs() {
+			if (args != nullptr)
+				delete args;
+			}
     };
 
     static_assert(sizeof(FunctionArgs<std::monostate>) == 0x10);

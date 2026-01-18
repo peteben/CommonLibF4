@@ -1,5 +1,6 @@
 #include "PCH.h"
 #include <RE/msvc/functional.h>
+#include <RE/Bethesda/BSScriptUtil.h>
 #include <RE/Bethesda/FunctionArgs.h>
 
 /*
@@ -80,13 +81,14 @@ bool DispatchStaticCall(
 			a_objName,
 			a_funcName,
 			[&](RE::BSScrapArray<RE::BSScript::Variable>& a_out) {
-			a_out = detail::PackVariables(a_args...);
+				a_out = RE::BSScript::detail::PackVariables(a_args...);
 			return true;
 			},
 			a_callback);
 		}
 	else {
-		return DispatchStaticCallOG(vm, a_objName, a_funcName, (FunctionArgs{ vm, a_args... }).get(), a_callback);
+		FunctionArgs l_args(vm, a_args...);
+		return DispatchStaticCallOG(vm, a_objName, a_funcName, l_args.get(), a_callback);
 		}
 	}
 
@@ -107,13 +109,14 @@ bool DispatchMethodCall(
 			a_objName,
 			a_funcName,
 			[&](RE::BSScrapArray<RE::BSScript::Variable>& a_out) {
-			a_out = detail::PackVariables(a_args...);
+			a_out = RE::BSScript::detail::PackVariables(a_args...);
 			return true;
 			},
 			a_callback);
 		}
 	else {
-		return DispatchMethodCallOG(vm, a_objHandle, a_objName, a_funcName, (FunctionArgs{ vm, a_args... }).get(), a_callback);
+		FunctionArgs l_args(vm, a_args...);
+		return DispatchMethodCallOG(vm, a_objHandle, a_objName, a_funcName, l_args.get(), a_callback);
 		}
 	}
 
@@ -122,7 +125,7 @@ bool DispatchMethodCall(
 // Call RegisterForExternalEvent to register Papyrus functions to be called.
 
 template <class... Args>
-static void SendPapyrusExternalEvent(std::string a_eventName, Args... _args) {
+void SendPapyrusExternalEvent(std::string a_eventName, Args... a_args) {
 	auto const papyrus = F4SE::GetPapyrusInterface();
 	auto* vm = RE::GameVM::GetSingleton()->GetVM().get();
 
@@ -134,7 +137,7 @@ static void SendPapyrusExternalEvent(std::string a_eventName, Args... _args) {
 			};
 		PapyrusEventData evntData;
 
-		evntData.argsPacked = PackVariables(_args...);
+		evntData.argsPacked = RE::BSScript::detail::PackVariables(a_args...);
 		evntData.vm = vm;
 
 		papyrus->GetExternalEventRegistrations(
@@ -155,9 +158,11 @@ static void SendPapyrusExternalEvent(std::string a_eventName, Args... _args) {
 			RE::BSScript::IVirtualMachine* vm;
 			BSTThreadScrapFunctionOG<bool(RE::BSScrapArray<RE::BSScript::Variable>&)> scrapFunc;
 			};
-		PapyrusEventData evntData;
 
-		evntData.scrapFunc = (FunctionArgs{ vm, _args... }).get();
+		PapyrusEventData evntData;
+		FunctionArgs l_args(vm, a_args...);
+
+		evntData.scrapFunc = l_args.get();
 		evntData.vm = vm;
 
 		papyrus->GetExternalEventRegistrations(
