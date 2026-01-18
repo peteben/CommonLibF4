@@ -24,18 +24,22 @@ SOFTWARE.
 
 #pragma once
 
-namespace Papyrus {
+namespace Papyrus
+{
 	template <class F>
 	using BSTThreadScrapFunctionOG = RE::msvc::function<F>;  // Used by OG/VR for DispatchMethod calls
 
-	namespace detail {
-        class FunctionArgsBase {
-        public:
-            FunctionArgsBase() = delete;
+	namespace detail
+	{
+		class FunctionArgsBase
+		{
+		public:
+			FunctionArgsBase() = delete;
 
-            FunctionArgsBase(RE::BSScript::IVirtualMachine* a_vm) : args(nullptr),vm(a_vm) {}
+			FunctionArgsBase(RE::BSScript::IVirtualMachine* a_vm) :
+				args(nullptr), vm(a_vm) {}
 
-            /*
+			/*
             bool operator()(RE::BSScrapArray<RE::BSScript::Variable>& a_args)
             {
                 args->GetArrayCopy(a_args, *vm);
@@ -43,41 +47,47 @@ namespace Papyrus {
             }
             */
 
-        protected:
-            // members
-            RE::BSScript::ArrayWrapper<RE::BSScript::Variable>* args;  // 00
-            RE::BSScript::IVirtualMachine* vm;                         // 08
-        };
+		protected:
+			// members
+			RE::BSScript::ArrayWrapper<RE::BSScript::Variable>* args;  // 00
+			RE::BSScript::IVirtualMachine*                      vm;    // 08
+		};
 
-        static_assert(sizeof(FunctionArgsBase) == 0x10);
+		static_assert(sizeof(FunctionArgsBase) == 0x10);
 
-        inline BSTThreadScrapFunctionOG<bool(RE::BSScrapArray<RE::BSScript::Variable>&)> CreateThreadScrapFunction(
-            FunctionArgsBase& a_args) {
-            using func_t = decltype(&detail::CreateThreadScrapFunction);
-            REL::Relocation<func_t> func{REL::ID(69733)};
-            return func(a_args);
-        }
-    }
+		inline BSTThreadScrapFunctionOG<bool(RE::BSScrapArray<RE::BSScript::Variable>&)> CreateThreadScrapFunction(
+			FunctionArgsBase& a_args)
+		{
+			using func_t = decltype(&detail::CreateThreadScrapFunction);
+			REL::Relocation<func_t> func{ REL::ID(69733) };
+			return func(a_args);
+		}
+	}
 
-    template <class... Args>
-    class FunctionArgs : public detail::FunctionArgsBase {
-    public:
-        FunctionArgs() = delete;
+	template <class... Args>
+	class FunctionArgs : public detail::FunctionArgsBase
+	{
+	public:
+		FunctionArgs() = delete;
 
-        FunctionArgs(RE::BSScript::IVirtualMachine* a_vm, Args... a_args) : FunctionArgsBase(a_vm) {
+		FunctionArgs(RE::BSScript::IVirtualMachine* a_vm, Args... a_args) :
+			FunctionArgsBase(a_vm)
+		{
 			auto scrap = RE::BSScript::detail::PackVariables(a_args...);
-            args = new RE::BSScript::ArrayWrapper<RE::BSScript::Variable>(scrap, *vm);
-        }
+			args = new RE::BSScript::ArrayWrapper<RE::BSScript::Variable>(scrap, *vm);
+		}
 
-        BSTThreadScrapFunctionOG<bool(RE::BSScrapArray<RE::BSScript::Variable>&)> get() {
-            return detail::CreateThreadScrapFunction(*this);
-        }
+		BSTThreadScrapFunctionOG<bool(RE::BSScrapArray<RE::BSScript::Variable>&)> get()
+		{
+			return detail::CreateThreadScrapFunction(*this);
+		}
 
-		~FunctionArgs() {
+		~FunctionArgs()
+		{
 			if (args != nullptr)
 				delete args;
-			}
-    };
+		}
+	};
 
-    static_assert(sizeof(FunctionArgs<std::monostate>) == 0x10);
+	static_assert(sizeof(FunctionArgs<std::monostate>) == 0x10);
 }
