@@ -69,6 +69,10 @@ namespace Papyrus
 	{
 	public:
 		FunctionArgs() = delete;
+		FunctionArgs(const FunctionArgs&) = delete;
+		FunctionArgs& operator=(const FunctionArgs&) = delete;
+		FunctionArgs(FunctionArgs&&) = delete;
+		FunctionArgs& operator=(FunctionArgs&&) = delete;
 
 		FunctionArgs(RE::BSScript::IVirtualMachine* a_vm, Args... a_args) :
 			FunctionArgsBase(a_vm)
